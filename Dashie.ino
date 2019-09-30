@@ -81,6 +81,7 @@ void processSensorParticlesUpload();
 void loadLightData();
 bool readPMSdata(Stream *s);
 void calculateIntensity(uint16_t light);
+void ledPowerSet();
 void ledNotifPulse(int pulse, RGB * color);
 int openURL(String url);
 
@@ -94,9 +95,7 @@ void setupLED() {
 void setupPreConnect() {
     uint16_t light = SENSOR_LIGHT_START;
 	calculateIntensity(light);
-
-    strip.setPixelColor(0, strip.Color(ledPower.led.r * intensity, ledPower.led.g * intensity, ledPower.led.b * intensity));
-    strip.show();
+	ledPowerSet();
 }
 
 void setupSensors() {
@@ -177,37 +176,37 @@ void processSensorParticlesUpload() {
 	// Upload
     int result;
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_003, avg003 * SENSOR_PARTICLE_MULTI, &result, 4);        
+    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_003, avg003 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
         ledNotifPulse(PULSE_DONE, &ledSensorPMS_003);
     else
         ledNotifPulse(PULSE_FAIL, &ledSensorPMS_003);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_005, avg005 * SENSOR_PARTICLE_MULTI, &result, 4);        
+    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_005, avg005 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
         ledNotifPulse(PULSE_DONE, &ledSensorPMS_005);
     else
         ledNotifPulse(PULSE_FAIL, &ledSensorPMS_005);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_010, avg010 * SENSOR_PARTICLE_MULTI, &result, 4);        
+    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_010, avg010 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
         ledNotifPulse(PULSE_DONE, &ledSensorPMS_010);
     else
         ledNotifPulse(PULSE_FAIL, &ledSensorPMS_010);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_025, avg025 * SENSOR_PARTICLE_MULTI, &result, 4);        
+    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_025, avg025 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
         ledNotifPulse(PULSE_DONE, &ledSensorPMS_025);
     else
         ledNotifPulse(PULSE_FAIL, &ledSensorPMS_025);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_050, avg050 * SENSOR_PARTICLE_MULTI, &result, 4);        
+    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_050, avg050 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
         ledNotifPulse(PULSE_DONE, &ledSensorPMS_050);
     else
         ledNotifPulse(PULSE_FAIL, &ledSensorPMS_050);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_100, avg100 * SENSOR_PARTICLE_MULTI, &result, 4);        
+    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_100, avg100 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
         ledNotifPulse(PULSE_DONE, &ledSensorPMS_100);
     else
@@ -230,18 +229,21 @@ void loadLightData() {
     	if (SENSOR_LIGHT_LOG) {
     		uint16_t loglight = (uint16_t)lroundf(exp(light));
     		if (loglight - 1 > 0)
-    			loglight = loglight--;
+    			loglight--;
+			if (SENSOR_LIGHT_DEBUG)
+    			Serial.println("Restored from log value: " + String(loglight));
     		calculateIntensity(loglight);
     	}
-    	calculateIntensity((uint16_t)light);
+    	else {
+    		calculateIntensity((uint16_t)light);
+    	}
+
+		ledPowerSet();
     }
     else {
     	if (SENSOR_LIGHT_DEBUG)
 	    	Serial.println("An error has occured reading the value! " + varipassGetResultDescription(result));
 	}
-
-    strip.setPixelColor(0, strip.Color(ledPower.led.r * intensity, ledPower.led.g * intensity, ledPower.led.b * intensity));
-    strip.show();
 }
 
 bool readPMSdata(Stream *s) {
@@ -294,6 +296,14 @@ void calculateIntensity(uint16_t light) {
         intensity = (float) LED_BRIGHT_MAX / 255;
     else
         intensity = (LED_BRIGHT_MIN + (LED_BRIGHT_MAX - LED_BRIGHT_MIN) * ((float) (light - LED_LIGHT_MIN) / (LED_LIGHT_MAX - LED_LIGHT_MIN))) / 255;
+}
+
+void ledPowerSet() {
+	if (intensity == -1)
+    	strip.setPixelColor(0, strip.Color(ledLowColor.r, ledLowColor.g, ledLowColor.b));
+    else
+    	strip.setPixelColor(0, strip.Color(ledPower.led.r * intensity, ledPower.led.g * intensity, ledPower.led.b * intensity));
+    strip.show();
 }
 
 void ledNotifPulse(int pulse, RGB * color) {
@@ -360,7 +370,6 @@ void setup() {
 		openURL(String(LUNA_URL_BOOT) + "&key=" + String(LUNA_KEY) + "&device=" + String(WIFI_HOST));
 		loadLightData();
 	    timeNow = millis();
-	    loadLightData();
 	}
 }
 
