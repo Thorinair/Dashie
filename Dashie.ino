@@ -31,18 +31,16 @@
 /* LEDs */
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(2, PIN_PIXEL, NEO_GRB + NEO_KHZ800);
 float intensity = 1.0;
-bool firstBoot = true;
 
 struct LEDPower {
 	RGB led {ledPowerColor.r, ledPowerColor.g, ledPowerColor.b};
 } ledPower;
 
 /* Misc. Values */
-bool firstStart = true;
-unsigned long timeNow = 0;
+unsigned long timeUpload = 0;
+unsigned long timeLight = 0;
 
 /* Sensors */
-
 SoftwareSerial softSerial(PIN_SERIAL_RX, PIN_SERIAL_TX, false, 256);
 
 struct pms5003data {
@@ -55,6 +53,9 @@ struct pms5003data {
 } pms;
 
 struct SensorParicles {
+	uint16_t pm010[MAX_SAMPLE_COUNT] = {0};
+	uint16_t pm025[MAX_SAMPLE_COUNT] = {0};
+	uint16_t pm100[MAX_SAMPLE_COUNT] = {0};
 	uint16_t raw003[MAX_SAMPLE_COUNT] = {0};
 	uint16_t raw005[MAX_SAMPLE_COUNT] = {0};
 	uint16_t raw010[MAX_SAMPLE_COUNT] = {0};
@@ -111,9 +112,12 @@ void setupSensor_pms() {
 
 void processTicks() {
 	if(processSensorParticlesSample()) {
-		if (millis() - timeNow >= UPLOAD_SECOND_COUNT * 1000) {
-	        timeNow = millis();
+		if (millis() - timeUpload >= MEASURE_DURATION * 1000) {
+	        timeUpload = millis();
 	        processSensorParticlesUpload();
+	    }
+		if (millis() - timeLight >= LIGHT_DURATION * 1000) {
+	        timeLight = millis();
 	        loadLightData();
 	    }
 	}
@@ -123,6 +127,14 @@ bool processSensorParticlesSample() {
 	if (readPMSdata(&softSerial)) {
 		if (SENSOR_PARTICLE_DEBUG) {
 	        Serial.println("---------------------------------------");
+
+	        Serial.print("PM1.0 value: ");
+	        Serial.println(pms.pm10_standard);
+	        Serial.print("PM2.5 value: ");
+	        Serial.println(pms.pm25_standard);
+	        Serial.print("PM10.0 value: ");
+	        Serial.println(pms.pm100_standard);
+
 	        Serial.print("Particles >  0.3um / 0.1L air: ");
 	        Serial.println(pms.particles_03um);
 	        Serial.print("Particles >  0.5um / 0.1L air: ");
@@ -136,6 +148,10 @@ bool processSensorParticlesSample() {
 	        Serial.print("Particles > 10.0um / 0.1L air: ");
 	        Serial.println(pms.particles_100um);
 	    }
+	    sensorParticles.pm010[sensorParticles.count] = pms.pm10_standard;
+	    sensorParticles.pm025[sensorParticles.count] = pms.pm25_standard;
+	    sensorParticles.pm100[sensorParticles.count] = pms.pm100_standard;
+
 	    sensorParticles.raw003[sensorParticles.count] = pms.particles_03um;
 	    sensorParticles.raw005[sensorParticles.count] = pms.particles_05um;
 	    sensorParticles.raw010[sensorParticles.count] = pms.particles_10um;
@@ -153,12 +169,23 @@ bool processSensorParticlesSample() {
 void processSensorParticlesUpload() {
 
 	// Process
+	float apm010 = 0;
+	float apm025 = 0;
+	float apm100 = 0;
+
 	float avg003 = 0;
 	float avg005 = 0;
 	float avg010 = 0;
 	float avg025 = 0;
 	float avg050 = 0;
 	float avg100 = 0;
+
+	for (int i = 0; i < sensorParticles.count; i++)
+		apm010 += (float) sensorParticles.pm010[i] / sensorParticles.count;
+	for (int i = 0; i < sensorParticles.count; i++)
+		apm025 += (float) sensorParticles.pm025[i] / sensorParticles.count;
+	for (int i = 0; i < sensorParticles.count; i++)
+		apm100 += (float) sensorParticles.pm100[i] / sensorParticles.count;
 
 	for (int i = 0; i < sensorParticles.count; i++)
 		avg003 += (float) sensorParticles.raw003[i] / sensorParticles.count;
@@ -173,44 +200,69 @@ void processSensorParticlesUpload() {
 	for (int i = 0; i < sensorParticles.count; i++)
 		avg100 += (float) sensorParticles.raw100[i] / sensorParticles.count;
 
+	avg003 -= avg005;
+	avg005 -= avg010;
+	avg010 -= avg025;
+	avg025 -= avg050;
+	avg050 -= avg100;
+
 	// Upload
     int result;
 
+    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PM_010, apm010, &result, 2);        
+    if (result == VARIPASS_RESULT_SUCCESS)
+        ledNotifPulse(PULSE_DONE, &ledSensorPMS_PM010);
+    else
+        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_PM010);
+
+    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PM_025, apm025, &result, 2);        
+    if (result == VARIPASS_RESULT_SUCCESS)
+        ledNotifPulse(PULSE_DONE, &ledSensorPMS_PM025);
+    else
+        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_PM025);
+
+    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PM_100, apm100, &result, 2);        
+    if (result == VARIPASS_RESULT_SUCCESS)
+        ledNotifPulse(PULSE_DONE, &ledSensorPMS_PM100);
+    else
+        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_PM100);
+
+
     varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_003, avg003 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_003);
+        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr003);
     else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_003);
+        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr003);
 
     varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_005, avg005 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_005);
+        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr005);
     else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_005);
+        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr005);
 
     varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_010, avg010 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_010);
+        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr010);
     else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_010);
+        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr010);
 
     varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_025, avg025 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_025);
+        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr025);
     else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_025);
+        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr025);
 
     varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_050, avg050 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_050);
+        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr050);
     else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_050);
+        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr050);
 
     varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_100, avg100 * SENSOR_PARTICLE_MULTI, &result, 2);        
     if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_100);
+        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr100);
     else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_100);
+        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr100);
 
     sensorParticles.count = 0;
 }
@@ -369,7 +421,10 @@ void setup() {
 		connectWiFi(true);
 		openURL(String(LUNA_URL_BOOT) + "&key=" + String(LUNA_KEY) + "&device=" + String(WIFI_HOST));
 		loadLightData();
-	    timeNow = millis();
+		delay(INITIAL_WAIT * 1000);
+        ledNotifPulse(PULSE_DONE, &ledPowerColor);
+	    timeUpload = millis();
+	    timeLight = millis();
 	}
 }
 

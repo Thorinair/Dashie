@@ -2,8 +2,14 @@
  * Sampling and Upload Configuration
  *******/
 
-/* Maximum number of samples. */
-#define MAX_SAMPLE_COUNT 200
+/* Time to wait initially until measurement starts in seconds. */
+#define INITIAL_WAIT 30
 
-/* Number of seconds after which upload fires. */
-#define UPLOAD_SECOND_COUNT 61
+/* Maximum number of samples. */
+#define MAX_SAMPLE_COUNT 400
+
+/* Number of seconds to measure before upload fires. */
+#define MEASURE_DURATION 120
+
+/* Number of seconds between light value reads. */
+#define LIGHT_DURATION 10

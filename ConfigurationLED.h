@@ -23,7 +23,7 @@ RGB ledLowColor {0, 0, 0};
  *******/
 
 /* Color of the power LED. */
-RGB ledPowerColor {32, 128, 255};
+RGB ledPowerColor {157, 217, 248};
 
 
 
@@ -44,12 +44,16 @@ RGB ledPowerColor {32, 128, 255};
 RGB ledNotifWiFiSearch {128, 128, 128};
 RGB ledNotifWiFiFail   {192, 0, 0};
 
-RGB ledSensorPMS_003   {160, 160, 24};
-RGB ledSensorPMS_005   {160, 160, 24};
-RGB ledSensorPMS_010   {160, 160, 24};
-RGB ledSensorPMS_025   {160, 160, 24};
-RGB ledSensorPMS_050   {160, 160, 24};
-RGB ledSensorPMS_100   {160, 160, 24};
+RGB ledSensorPMS_PM010 {157, 217, 248};
+RGB ledSensorPMS_PM025 {157, 217, 248};
+RGB ledSensorPMS_PM100 {157, 217, 248};
+
+RGB ledSensorPMS_Pr003 {241, 62, 50};
+RGB ledSensorPMS_Pr005 {246, 118, 52};
+RGB ledSensorPMS_Pr010 {245, 235, 126};
+RGB ledSensorPMS_Pr025 {122, 194, 64};
+RGB ledSensorPMS_Pr050 {1, 147, 207};
+RGB ledSensorPMS_Pr100 {102, 46, 138};
 
 /* Enable color debugging.
  * The notification LED will keep glowing in the color set below. 

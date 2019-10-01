@@ -6,6 +6,9 @@
 #define VARIPASS_KEY "aaaaaaaa00000000"
 
 /* VariPass variable IDs. */
+#define VARIPASS_ID_PM_010        "aaaa0000"
+#define VARIPASS_ID_PM_025        "aaaa0000"
+#define VARIPASS_ID_PM_100        "aaaa0000"
 #define VARIPASS_ID_PARTICLES_003 "aaaa0000"
 #define VARIPASS_ID_PARTICLES_005 "aaaa0000"
 #define VARIPASS_ID_PARTICLES_010 "aaaa0000"
