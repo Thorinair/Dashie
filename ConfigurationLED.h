@@ -6,7 +6,7 @@
  * LED_BRIGHT_MIN and LED_BRIGHT_MAX control the minimum and maximum brightness of the LED itself.
  * LED_LIGHT_MIN and LED_LIGHT_MAX control which ambient light level will count as minimum and which as maximum.
  */
-#define LED_BRIGHT_MIN 8
+#define LED_BRIGHT_MIN 6
 #define LED_BRIGHT_MAX 255
 #define LED_LIGHT_MIN  2
 #define LED_LIGHT_MAX  15000
@@ -23,7 +23,7 @@ RGB ledLowColor {0, 0, 0};
  *******/
 
 /* Color of the power LED. */
-RGB ledPowerColor {157, 217, 248};
+RGB ledPowerColor {32, 96, 128};
 
 
 
@@ -41,23 +41,23 @@ RGB ledPowerColor {157, 217, 248};
 #define LED_NOTIF_PULSE_SENSOR_ERROR 50
 
 /* Notification colors. */
-RGB ledNotifWiFiSearch {128, 128, 128};
+RGB ledNotifWiFiSearch {128, 128, 128};;
 RGB ledNotifWiFiFail   {192, 0, 0};
 
-RGB ledSensorPMS_PM010 {157, 217, 248};
-RGB ledSensorPMS_PM025 {157, 217, 248};
-RGB ledSensorPMS_PM100 {157, 217, 248};
+RGB ledSensorPMS_PM010 {32, 96, 128};
+RGB ledSensorPMS_PM025 {32, 96, 128};
+RGB ledSensorPMS_PM100 {32, 96, 128};
 
-RGB ledSensorPMS_Pr003 {241, 62, 50};
-RGB ledSensorPMS_Pr005 {246, 118, 52};
-RGB ledSensorPMS_Pr010 {245, 235, 126};
-RGB ledSensorPMS_Pr025 {122, 194, 64};
-RGB ledSensorPMS_Pr050 {1, 147, 207};
-RGB ledSensorPMS_Pr100 {102, 46, 138};
+RGB ledSensorPMS_Pr003 {255, 0, 0};
+RGB ledSensorPMS_Pr005 {224, 48, 0};
+RGB ledSensorPMS_Pr010 {192, 96, 0};
+RGB ledSensorPMS_Pr025 {128, 128, 0};
+RGB ledSensorPMS_Pr050 {0, 96, 96};
+RGB ledSensorPMS_Pr100 {96, 0, 160};
 
 /* Enable color debugging.
  * The notification LED will keep glowing in the color set below. 
  * No sensor measurement will take place.
  */
 #define LED_COLOR_DEBUG false
-RGB ledDebug {32, 160, 64};
+RGB ledDebug {96, 0, 160};

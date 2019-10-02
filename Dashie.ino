@@ -414,13 +414,13 @@ void setup() {
     Serial.begin(115200);
 
     setupLED();
+	setupSensors();
+	setupPreConnect();
+	connectWiFi(true);
+	loadLightData();
 
 	if (!LED_COLOR_DEBUG) {
-    	setupSensors();
-    	setupPreConnect();
-		connectWiFi(true);
 		openURL(String(LUNA_URL_BOOT) + "&key=" + String(LUNA_KEY) + "&device=" + String(WIFI_HOST));
-		loadLightData();
 		delay(INITIAL_WAIT * 1000);
         ledNotifPulse(PULSE_DONE, &ledPowerColor);
 	    timeUpload = millis();
@@ -428,7 +428,17 @@ void setup() {
 	}
 }
 
-void loop() {
-    processTicks();    
+void loop() {	
+	if (!LED_COLOR_DEBUG) {
+		processTicks();
+
+		if (WiFi.status() != WL_CONNECTED) {
+			connectWiFi(true);
+	    }
+	}
+	else {
+		strip.setPixelColor(1, strip.Color(ledDebug.r * intensity, ledDebug.g * intensity, ledDebug.b * intensity)); 
+		strip.show();
+	} 
 }
 
