@@ -6,7 +6,7 @@
  * LED_BRIGHT_MIN and LED_BRIGHT_MAX control the minimum and maximum brightness of the LED itself.
  * LED_LIGHT_MIN and LED_LIGHT_MAX control which ambient light level will count as minimum and which as maximum.
  */
-#define LED_BRIGHT_MIN 6
+#define LED_BRIGHT_MIN 8
 #define LED_BRIGHT_MAX 255
 #define LED_LIGHT_MIN  2
 #define LED_LIGHT_MAX  15000

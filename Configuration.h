@@ -13,3 +13,6 @@
 
 /* Number of seconds between light value reads. */
 #define LIGHT_DURATION 10
+
+/* Duration in miliseconds between measuring attempts. */
+#define SAMPLE_INTERVAL 10

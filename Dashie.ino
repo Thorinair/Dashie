@@ -440,5 +440,7 @@ void loop() {
 		strip.setPixelColor(1, strip.Color(ledDebug.r * intensity, ledDebug.g * intensity, ledDebug.b * intensity)); 
 		strip.show();
 	} 
+
+	delay(SAMPLE_INTERVAL);
 }
 
