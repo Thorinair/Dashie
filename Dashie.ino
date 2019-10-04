@@ -18,7 +18,6 @@
 
 #define PIN_PIXEL       13
 #define PIN_SERIAL_RX   12
-#define PIN_SERIAL_TX   14
 
 #define PULSE_DONE 0
 #define PULSE_FAIL 1
@@ -41,7 +40,7 @@ unsigned long timeUpload = 0;
 unsigned long timeLight = 0;
 
 /* Sensors */
-SoftwareSerial softSerial(PIN_SERIAL_RX, PIN_SERIAL_TX, false, 256, 128);
+SoftwareSerial softSerial(PIN_SERIAL_RX, SW_SERIAL_UNUSED_PIN, false, 256, 128);
 
 struct pms5003data {
     uint16_t framelen;
