@@ -13,7 +13,7 @@
  *******/
 
 /* Starting value of the light sensor. */
-#define SENSOR_LIGHT_START 2
+#define SENSOR_LIGHT_START 1000
 /* Restore the value before the light was calculated as natural log. */
 #define SENSOR_LIGHT_LOG   true
 /* Write debug info for the sensor. */

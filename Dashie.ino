@@ -1,6 +1,6 @@
 #include <Adafruit_NeoPixel.h>
 
-#include <ESPSoftwareSerial.h>
+#include <SoftwareSerial.h>
 
 #include "ESP8266WiFi.h"
 #include <VariPass.h>
@@ -41,7 +41,7 @@ unsigned long timeUpload = 0;
 unsigned long timeLight = 0;
 
 /* Sensors */
-SoftwareSerial softSerial(PIN_SERIAL_RX, PIN_SERIAL_TX, false, 256);
+SoftwareSerial softSerial(PIN_SERIAL_RX, PIN_SERIAL_TX, false, 256, 128);
 
 struct pms5003data {
     uint16_t framelen;
@@ -104,7 +104,7 @@ void setupSensors() {
 }
 
 void setupSensor_pms() {
-    softSerial.begin(9600);
+	softSerial.begin(9600);
 }
 
 
@@ -167,102 +167,104 @@ bool processSensorParticlesSample() {
 }
 
 void processSensorParticlesUpload() {
+	if (sensorParticles.count > 0)
+	{
+		// Process
+		float apm010 = 0;
+		float apm025 = 0;
+		float apm100 = 0;
 
-	// Process
-	float apm010 = 0;
-	float apm025 = 0;
-	float apm100 = 0;
+		float avg003 = 0;
+		float avg005 = 0;
+		float avg010 = 0;
+		float avg025 = 0;
+		float avg050 = 0;
+		float avg100 = 0;
 
-	float avg003 = 0;
-	float avg005 = 0;
-	float avg010 = 0;
-	float avg025 = 0;
-	float avg050 = 0;
-	float avg100 = 0;
+		for (int i = 0; i < sensorParticles.count; i++)
+			apm010 += (float) sensorParticles.pm010[i] / sensorParticles.count;
+		for (int i = 0; i < sensorParticles.count; i++)
+			apm025 += (float) sensorParticles.pm025[i] / sensorParticles.count;
+		for (int i = 0; i < sensorParticles.count; i++)
+			apm100 += (float) sensorParticles.pm100[i] / sensorParticles.count;
 
-	for (int i = 0; i < sensorParticles.count; i++)
-		apm010 += (float) sensorParticles.pm010[i] / sensorParticles.count;
-	for (int i = 0; i < sensorParticles.count; i++)
-		apm025 += (float) sensorParticles.pm025[i] / sensorParticles.count;
-	for (int i = 0; i < sensorParticles.count; i++)
-		apm100 += (float) sensorParticles.pm100[i] / sensorParticles.count;
+		for (int i = 0; i < sensorParticles.count; i++)
+			avg003 += (float) sensorParticles.raw003[i] / sensorParticles.count;
+		for (int i = 0; i < sensorParticles.count; i++)
+			avg005 += (float) sensorParticles.raw005[i] / sensorParticles.count;
+		for (int i = 0; i < sensorParticles.count; i++)
+			avg010 += (float) sensorParticles.raw010[i] / sensorParticles.count;
+		for (int i = 0; i < sensorParticles.count; i++)
+			avg025 += (float) sensorParticles.raw025[i] / sensorParticles.count;
+		for (int i = 0; i < sensorParticles.count; i++)
+			avg050 += (float) sensorParticles.raw050[i] / sensorParticles.count;
+		for (int i = 0; i < sensorParticles.count; i++)
+			avg100 += (float) sensorParticles.raw100[i] / sensorParticles.count;
 
-	for (int i = 0; i < sensorParticles.count; i++)
-		avg003 += (float) sensorParticles.raw003[i] / sensorParticles.count;
-	for (int i = 0; i < sensorParticles.count; i++)
-		avg005 += (float) sensorParticles.raw005[i] / sensorParticles.count;
-	for (int i = 0; i < sensorParticles.count; i++)
-		avg010 += (float) sensorParticles.raw010[i] / sensorParticles.count;
-	for (int i = 0; i < sensorParticles.count; i++)
-		avg025 += (float) sensorParticles.raw025[i] / sensorParticles.count;
-	for (int i = 0; i < sensorParticles.count; i++)
-		avg050 += (float) sensorParticles.raw050[i] / sensorParticles.count;
-	for (int i = 0; i < sensorParticles.count; i++)
-		avg100 += (float) sensorParticles.raw100[i] / sensorParticles.count;
+		avg003 -= avg005;
+		avg005 -= avg010;
+		avg010 -= avg025;
+		avg025 -= avg050;
+		avg050 -= avg100;
 
-	avg003 -= avg005;
-	avg005 -= avg010;
-	avg010 -= avg025;
-	avg025 -= avg050;
-	avg050 -= avg100;
+		// Upload
+	    int result;
 
-	// Upload
-    int result;
+	    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PM_010, apm010, &result, 2);        
+	    if (result == VARIPASS_RESULT_SUCCESS)
+	        ledNotifPulse(PULSE_DONE, &ledSensorPMS_PM010);
+	    else
+	        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_PM010);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PM_010, apm010, &result, 2);        
-    if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_PM010);
-    else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_PM010);
+	    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PM_025, apm025, &result, 2);        
+	    if (result == VARIPASS_RESULT_SUCCESS)
+	        ledNotifPulse(PULSE_DONE, &ledSensorPMS_PM025);
+	    else
+	        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_PM025);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PM_025, apm025, &result, 2);        
-    if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_PM025);
-    else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_PM025);
-
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PM_100, apm100, &result, 2);        
-    if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_PM100);
-    else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_PM100);
+	    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PM_100, apm100, &result, 2);        
+	    if (result == VARIPASS_RESULT_SUCCESS)
+	        ledNotifPulse(PULSE_DONE, &ledSensorPMS_PM100);
+	    else
+	        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_PM100);
 
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_003, avg003 * SENSOR_PARTICLE_MULTI, &result, 2);        
-    if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr003);
-    else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr003);
+	    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_003, avg003 * SENSOR_PARTICLE_MULTI, &result, 2);        
+	    if (result == VARIPASS_RESULT_SUCCESS)
+	        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr003);
+	    else
+	        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr003);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_005, avg005 * SENSOR_PARTICLE_MULTI, &result, 2);        
-    if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr005);
-    else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr005);
+	    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_005, avg005 * SENSOR_PARTICLE_MULTI, &result, 2);        
+	    if (result == VARIPASS_RESULT_SUCCESS)
+	        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr005);
+	    else
+	        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr005);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_010, avg010 * SENSOR_PARTICLE_MULTI, &result, 2);        
-    if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr010);
-    else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr010);
+	    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_010, avg010 * SENSOR_PARTICLE_MULTI, &result, 2);        
+	    if (result == VARIPASS_RESULT_SUCCESS)
+	        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr010);
+	    else
+	        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr010);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_025, avg025 * SENSOR_PARTICLE_MULTI, &result, 2);        
-    if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr025);
-    else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr025);
+	    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_025, avg025 * SENSOR_PARTICLE_MULTI, &result, 2);        
+	    if (result == VARIPASS_RESULT_SUCCESS)
+	        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr025);
+	    else
+	        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr025);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_050, avg050 * SENSOR_PARTICLE_MULTI, &result, 2);        
-    if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr050);
-    else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr050);
+	    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_050, avg050 * SENSOR_PARTICLE_MULTI, &result, 2);        
+	    if (result == VARIPASS_RESULT_SUCCESS)
+	        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr050);
+	    else
+	        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr050);
 
-    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_100, avg100 * SENSOR_PARTICLE_MULTI, &result, 2);        
-    if (result == VARIPASS_RESULT_SUCCESS)
-        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr100);
-    else
-        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr100);
+	    varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_PARTICLES_100, avg100 * SENSOR_PARTICLE_MULTI, &result, 2);        
+	    if (result == VARIPASS_RESULT_SUCCESS)
+	        ledNotifPulse(PULSE_DONE, &ledSensorPMS_Pr100);
+	    else
+	        ledNotifPulse(PULSE_FAIL, &ledSensorPMS_Pr100);
+	}
 
     sensorParticles.count = 0;
 }
