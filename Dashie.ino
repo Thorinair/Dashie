@@ -30,6 +30,7 @@ typedef struct RGB {
 #define URL_RESULT_DONE 0
 #define URL_RESULT_FAIL 1
 
+#define SW_SERIAL_UNUSED_PIN -1
 
 /* LEDs */
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(2, PIN_PIXEL, NEO_GRB + NEO_KHZ800);
@@ -44,7 +45,7 @@ unsigned long timeUpload = 0;
 unsigned long timeLight = 0;
 
 /* Sensors */
-SoftwareSerial softSerial(PIN_SERIAL_RX, SW_SERIAL_UNUSED_PIN, false, 256, 128);
+SoftwareSerial softSerial(PIN_SERIAL_RX, SW_SERIAL_UNUSED_PIN, false);
 
 struct pms5003data {
     uint16_t framelen;
